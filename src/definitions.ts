@@ -12,7 +12,10 @@ export interface MockLocationCheckerPlugin {
    * @param options {packageName: string}
    */
   goToMockLocationAppDetail(options: { packageName: string }): Promise<void>;
+
+  checkMockGeoLocation(): Promise<CheckMockResult>;
 }
+
 export interface CheckMockResult {
   isMock: boolean;
   messages?: string;

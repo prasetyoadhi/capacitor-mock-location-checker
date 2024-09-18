@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import android.location.Location
 import android.location.LocationManager
 import android.net.Uri
 import android.os.Build
@@ -20,13 +19,25 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import org.json.JSONArray
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 
 const val TAG: String = "MockLocationChecker"
 
 class MockLocationChecker {
 
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private lateinit var locationClient: LocationClient
     private lateinit var mFusedLocationClient: FusedLocationProviderClient
     private var indicated = JSONArray()
 
@@ -113,7 +124,7 @@ class MockLocationChecker {
                         PackageManager.GET_PERMISSIONS
                     )
 
-                    val appInfo = pm.getApplicationInfo(applicationInfo.packageName,0)
+                    val appInfo = pm.getApplicationInfo(applicationInfo.packageName, 0)
 
                     // Get Permissions
                     val requestedPermissions = packageInfo.requestedPermissions
@@ -206,6 +217,70 @@ class MockLocationChecker {
             LocationManager.NETWORK_PROVIDER
         )
     }
+
+    suspend fun checkMockGeoLocation(activity: Activity): CheckMockResult =
+        suspendCoroutine { continuation ->
+            var msg = ""
+            var isMock = false
+            locationClient = DefaultLocationClient(
+                activity,
+                LocationServices.getFusedLocationProviderClient(activity)
+            )
+            val locationUpdatesJob = serviceScope.launch {
+                locationClient
+                    .getLocationUpdates(10000L)
+                    .catch { e ->
+                        e.printStackTrace()
+                        continuation.resumeWith(
+                            Result.success(
+                                CheckMockResult(
+                                    false,
+                                    "Failed to get location",
+                                    indicated
+                                )
+                            )
+                        )
+                    }
+                    .onEach { location ->
+                        val lat = location.latitude.toString()
+                        val long = location.longitude.toString()
+                        isMock = if (Build.VERSION.SDK_INT <= 30) {
+                            location.isFromMockProvider
+                        } else if (Build.VERSION.SDK_INT >= 31) {
+                            location.isMock
+                        } else {
+                            false
+                        }
+                        msg = "Location: ($lat, $long); Is Mock: $isMock"
+                    }
+                    .collect {
+                        continuation.resumeWith(
+                            Result.success(
+                                CheckMockResult(
+                                    isMock,
+                                    msg,
+                                    indicated
+                                )
+                            )
+                        )
+                    }
+            }
+
+            serviceScope.launch {
+                delay(30000L)
+                locationUpdatesJob.cancel()
+                continuation.resumeWith(
+                    Result.success(
+                        CheckMockResult(
+                            false,
+                            "Timeout",
+                            indicated
+                        )
+                    )
+                )
+            }
+        }
+
 }
 
 data class CheckMockResult(

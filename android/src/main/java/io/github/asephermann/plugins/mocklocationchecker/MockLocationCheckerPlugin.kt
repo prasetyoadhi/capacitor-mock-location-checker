@@ -10,6 +10,9 @@ import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 
 @CapacitorPlugin(name = "MockLocationChecker")
@@ -49,4 +52,39 @@ class MockLocationCheckerPlugin : Plugin() {
             activity.startActivity(intent)
         }
     }
+
+//    @PluginMethod
+//    fun checkMockGeoLocation(call: PluginCall)  {
+//        val ret = JSObject()
+//
+//        val result = implementation.checkMockGeoLocation(activity)
+//
+//        ret.put("isMock", result.isMock)
+//        ret.put("messages", result.messages)
+//        ret.put("indicated", result.indicated)
+//        call.resolve(ret)
+//    }
+
+    @PluginMethod
+    suspend fun checkMockGeoLocation(call: PluginCall) {
+        val ret = JSObject()
+
+        if (activity != null) {
+            CoroutineScope(Dispatchers.Main).launch {
+                try {
+                    val result = implementation.checkMockGeoLocation(activity)
+                    ret.put("isMock", result.isMock)
+                    ret.put("messages", result.messages)
+                    ret.put("indicated", result.indicated)
+                    call.resolve(ret)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    call.reject("An error occurred")
+                }
+            }
+        } else {
+            call.reject("Activity is null")
+        }
+    }
+
 }
