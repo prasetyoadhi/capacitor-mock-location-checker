@@ -62,6 +62,7 @@ or,
 * [`checkMock(...)`](#checkmock)
 * [`isLocationFromMockProvider()`](#islocationfrommockprovider)
 * [`goToMockLocationAppDetail(...)`](#gotomocklocationappdetail)
+* [`checkMockGeoLocation()`](#checkmockgeolocation)
 * [Interfaces](#interfaces)
 
 </docgen-index>
@@ -104,6 +105,17 @@ goToMockLocationAppDetail(options: { packageName: string; }) => Promise<void>
 | Param         | Type                                  | Description |
 | ------------- | ------------------------------------- | ----------- |
 | **`options`** | <code>{ packageName: string; }</code> | : string}   |
+
+--------------------
+
+
+### checkMockGeoLocation()
+
+```typescript
+checkMockGeoLocation() => Promise<CheckMockResult>
+```
+
+**Returns:** <code>Promise&lt;<a href="#checkmockresult">CheckMockResult</a>&gt;</code>
 
 --------------------
 
