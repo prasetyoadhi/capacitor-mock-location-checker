@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.json.JSONArray
+import java.io.File
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -41,29 +42,35 @@ class MockLocationChecker {
     private lateinit var mFusedLocationClient: FusedLocationProviderClient
     private var indicated = JSONArray()
 
+    @SuppressLint("ObsoleteSdkInt")
     fun checkMock(activity: Activity, whiteList: List<String>): CheckMockResult {
-
         val listData: ArrayList<String>
         var msg = ""
 
-        // returns true if mock location enabled, false if not enabled.
+        // check root
+        if (isDeviceRooted()) {
+            msg += "Device is rooted. Please unroot the device.\n"
+        }
+
+        // check Developer Options
+        if (isDeveloperOptionsEnabled(activity)) {
+            msg += "Developer options are enabled. Please disable Developer Options.\n"
+        }
+
+        // check Mock Location
         val isMock: Boolean = if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP) {
             if (Settings.Secure.getString(
                     activity.contentResolver,
                     Settings.Secure.ALLOW_MOCK_LOCATION
                 ) != "0"
             ) {
-                msg = "Please turn off Allow Mock locations option in developer options."
+                msg += "Please turn off Allow Mock locations option in developer options.\n"
                 true
             } else {
                 false
             }
         } else {
-            listData = ArrayList()
-            for (i in whiteList.indices) {
-                listData.add(whiteList[i])
-            }
-
+            listData = ArrayList(whiteList)
             if (checkForAllowMockLocationsApps(activity, listData)) {
                 msg =
                     "We've detected that there are other apps in the device, which are using Mock Location access (Location Spoofing Apps). Please uninstall first."
@@ -280,6 +287,47 @@ class MockLocationChecker {
                 )
             }
         }
+
+    private fun isDeviceRooted(): Boolean {
+        val paths = arrayOf(
+            "/system/app/Superuser.apk",
+            "/sbin/su",
+            "/system/bin/su",
+            "/system/xbin/su",
+            "/data/local/xbin/su",
+            "/data/local/bin/su",
+            "/system/sd/xbin/su",
+            "/system/bin/failsafe/su",
+            "/data/local/su"
+        )
+        return paths.any { path ->
+            try {
+                File(path).exists()
+            } catch (e: Exception) {
+                false
+            }
+        } || checkSuCommand()
+    }
+
+    private fun checkSuCommand(): Boolean {
+        return try {
+            val process = Runtime.getRuntime().exec(arrayOf("/system/xbin/which", "su"))
+            process.inputStream.bufferedReader().use { it.readLine() != null }
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    private fun isDeveloperOptionsEnabled(context: Context): Boolean {
+        return try {
+            Settings.Global.getInt(
+                context.contentResolver,
+                Settings.Global.DEVELOPMENT_SETTINGS_ENABLED
+            ) == 1
+        } catch (e: Settings.SettingNotFoundException) {
+            false
+        }
+    }
 
 }
 
