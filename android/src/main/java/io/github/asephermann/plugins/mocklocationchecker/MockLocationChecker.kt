@@ -3,6 +3,7 @@ package io.github.asephermann.plugins.mocklocationchecker
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
@@ -50,11 +51,30 @@ class MockLocationChecker {
         // check root
         if (isDeviceRooted()) {
             msg += "Device is rooted. Please unroot the device.\n"
+
+            AlertDialog.Builder(activity)
+                .setTitle("Security Alert")
+                .setMessage("This device is rooted. The application will now exit.")
+                .setPositiveButton("OK") { _, _ ->
+                    activity.finish() // Close the application
+                }
+                .setCancelable(false)
+                .show()
         }
 
         // check Developer Options
         if (isDeveloperOptionsEnabled(activity)) {
             msg += "Developer options are enabled. Please disable Developer Options.\n"
+
+            AlertDialog.Builder(activity)
+                .setTitle("Security Alert")
+                .setMessage("Please disable Developer Options to proceed.")
+                .setPositiveButton("Go to Settings") { _, _ ->
+                    val intent = Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)
+                    activity.startActivity(intent)
+                }
+                .setCancelable(false)
+                .show()
         }
 
         // check Mock Location
