@@ -20,6 +20,7 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import io.github.asephermann.plugins.mocklocationchecker.checkRoot.RootJailBreakDetector
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -38,6 +39,7 @@ const val TAG: String = "MockLocationChecker"
 
 class MockLocationChecker {
 
+    private val rootChecker: RootJailBreakDetector = RootJailBreakDetector()
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private lateinit var locationClient: LocationClient
     private lateinit var mFusedLocationClient: FusedLocationProviderClient
@@ -47,9 +49,10 @@ class MockLocationChecker {
     fun checkMock(activity: Activity, whiteList: List<String>): CheckMockResult {
         val listData: ArrayList<String>
         var msg = ""
-
         // check root
-        if (isDeviceRooted()) {
+        val isRooted = isDeviceRooted(activity)
+
+        if (isRooted) {
             msg += "Device is rooted. Please unroot the device.\n"
 
             AlertDialog.Builder(activity)
@@ -60,6 +63,9 @@ class MockLocationChecker {
                 }
                 .setCancelable(false)
                 .show()
+
+            // Return immediately if rooted
+            return CheckMockResult(isRooted = true, isMock = false, msg, indicated)
         }
 
         // check Developer Options
@@ -75,6 +81,9 @@ class MockLocationChecker {
                 }
                 .setCancelable(false)
                 .show()
+
+            // Return immediately if rooted
+            return CheckMockResult(isRooted = false, isMock = true, msg, indicated)
         }
 
         // check Mock Location
@@ -99,10 +108,11 @@ class MockLocationChecker {
                 false
             }
         }
+        Log.i(TAG, "isRooted: $isRooted")
         Log.i(TAG, "isMock: $isMock")
         Log.i(TAG, "msg: $msg")
         Log.i(TAG, "indicated: $indicated")
-        return CheckMockResult(isMock, msg, indicated)
+        return CheckMockResult(isRooted, isMock, msg, indicated)
     }
 
     private fun checkForAllowMockLocationsApps(
@@ -262,6 +272,7 @@ class MockLocationChecker {
                             Result.success(
                                 CheckMockResult(
                                     false,
+                                    false,
                                     "Failed to get location",
                                     indicated
                                 )
@@ -284,6 +295,7 @@ class MockLocationChecker {
                         continuation.resumeWith(
                             Result.success(
                                 CheckMockResult(
+                                    false,
                                     isMock,
                                     msg,
                                     indicated
@@ -300,6 +312,7 @@ class MockLocationChecker {
                     Result.success(
                         CheckMockResult(
                             false,
+                            false,
                             "Timeout",
                             indicated
                         )
@@ -308,34 +321,8 @@ class MockLocationChecker {
             }
         }
 
-    private fun isDeviceRooted(): Boolean {
-        val paths = arrayOf(
-            "/system/app/Superuser.apk",
-            "/sbin/su",
-            "/system/bin/su",
-            "/system/xbin/su",
-            "/data/local/xbin/su",
-            "/data/local/bin/su",
-            "/system/sd/xbin/su",
-            "/system/bin/failsafe/su",
-            "/data/local/su"
-        )
-        return paths.any { path ->
-            try {
-                File(path).exists()
-            } catch (e: Exception) {
-                false
-            }
-        } || checkSuCommand()
-    }
-
-    private fun checkSuCommand(): Boolean {
-        return try {
-            val process = Runtime.getRuntime().exec(arrayOf("/system/xbin/which", "su"))
-            process.inputStream.bufferedReader().use { it.readLine() != null }
-        } catch (e: Exception) {
-            false
-        }
+    private fun isDeviceRooted(activity: Activity): Boolean {
+        return rootChecker.checkIsRootedWithEmulator(activity)
     }
 
     private fun isDeveloperOptionsEnabled(context: Context): Boolean {
@@ -352,6 +339,7 @@ class MockLocationChecker {
 }
 
 data class CheckMockResult(
+    var isRooted: Boolean,
     var isMock: Boolean,
     var messages: String,
     var indicated: JSONArray

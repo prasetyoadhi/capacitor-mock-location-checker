@@ -1,10 +1,6 @@
-package io.github.asephermann.plugins.mocklocationchecker
+package io.github.asephermann.plugins.mocklocationchecker.checkRoot
 
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
-import android.os.Build
-import android.provider.Settings
 import android.util.Log
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
@@ -12,94 +8,10 @@ import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
 import com.scottyab.rootbeer.RootBeer
-import io.github.asephermann.plugins.mocklocationchecker.checkRoot.Constants
-import io.github.asephermann.plugins.mocklocationchecker.checkRoot.RootDetectionActions
-import io.github.asephermann.plugins.mocklocationchecker.checkRoot.RootJailBreakDetector
-import io.github.asephermann.plugins.mocklocationchecker.checkRoot.Utils
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
-
-@CapacitorPlugin(name = "MockLocationChecker")
-class MockLocationCheckerPlugin : Plugin() {
-    private val implementation = MockLocationChecker()
-
-    @PluginMethod
-    fun checkMock(call: PluginCall)  {
-        val whiteList = call.getArray("whiteList")
-        val ret = JSObject()
-
-        val result = implementation.checkMock(activity, whiteList.toList())
-        Log.d(Constants.LOG_TAG, "[checkMock] result: $result")
-
-        ret.put("isRooted", result.isRooted)
-        ret.put("isMock", result.isMock)
-        ret.put("messages", result.messages)
-        ret.put("indicated", result.indicated)
-        call.resolve(ret)
-    }
-
-    @PluginMethod
-    fun isLocationFromMockProvider(call: PluginCall)  {
-        val ret = JSObject()
-
-        val result = implementation.isLocationFromMockProvider(activity)
-
-        ret.put("value", result)
-        call.resolve(ret)
-    }
-
-    @PluginMethod
-    fun goToMockLocationAppDetail(call: PluginCall)  {
-        val packageName = call.getString("packageName")
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-            intent.data = Uri.parse(String.format("package:%s", packageName))
-            activity.startActivity(intent)
-        }
-    }
-
-//    @PluginMethod
-//    fun checkMockGeoLocation(call: PluginCall)  {
-//        val ret = JSObject()
-//
-//        val result = implementation.checkMockGeoLocation(activity)
-//
-//        ret.put("isMock", result.isMock)
-//        ret.put("messages", result.messages)
-//        ret.put("indicated", result.indicated)
-//        call.resolve(ret)
-//    }
-
-    @PluginMethod
-    suspend fun checkMockGeoLocation(call: PluginCall) {
-        val ret = JSObject()
-
-        if (activity != null) {
-            CoroutineScope(Dispatchers.Main).launch {
-                try {
-                    val result = implementation.checkMockGeoLocation(activity)
-                    ret.put("isMock", result.isMock)
-                    ret.put("messages", result.messages)
-                    ret.put("indicated", result.indicated)
-                    call.resolve(ret)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    call.reject("An error occurred")
-                }
-            }
-        } else {
-            call.reject("Activity is null")
-        }
-    }
-  
-    //////////////////////////////////////////////////////////
-    // check Root and Emulator
-    //////////////////////////////////////////////////////////
-
-    private val implementationCheckRoot = RootJailBreakDetector()
+@CapacitorPlugin(name = "RootJailBreakDetector")
+class RootJailBreakDetectorPlugin : Plugin() {
+    private val implementation = RootJailBreakDetector()
 
     /**
      * Generic method to check rooted status with various configurations.
@@ -112,9 +24,9 @@ class MockLocationCheckerPlugin : Plugin() {
         val rootBeer = RootBeer(context)
         val rootBeerCheck = if (useBusyBox) rootBeer.isRootedWithBusyBoxCheck else rootBeer.isRooted
         val internalCheck = if (checkEmulator) {
-            implementationCheckRoot.checkIsRootedWithEmulator(activity)
+            implementation.checkIsRootedWithEmulator(activity)
         } else {
-            implementationCheckRoot.checkIsRooted(activity)
+            implementation.checkIsRooted(activity)
         }
 
         Log.d(Constants.LOG_TAG, "[checkRootStatus] RootBeerCheck: $rootBeerCheck, InternalCheck: $internalCheck")
@@ -208,7 +120,7 @@ class MockLocationCheckerPlugin : Plugin() {
                 RootDetectionActions.ACTION_CHECK_FOR_ROOT_NATIVE -> rootBeer.checkForRootNative()
                 RootDetectionActions.ACTION_DETECT_ROOT_CLOAKING_APPS -> rootBeer.detectRootCloakingApps()
                 RootDetectionActions.ACTION_IS_SELINUX_FLAG_ENABLED -> Utils.isSelinuxFlagInEnabled
-                else -> implementationCheckRoot.whatIsRooted(action, context)
+                else -> implementation.whatIsRooted(action, context)
             }
 
             Log.d(Constants.LOG_TAG, "[whatIsRooted] Action: $action, Result: $isRooted")
@@ -225,7 +137,7 @@ class MockLocationCheckerPlugin : Plugin() {
     @PluginMethod
     fun getDeviceInfo(call: PluginCall) {
         try {
-            val ret = implementationCheckRoot.getDeviceInfo()
+            val ret = implementation.getDeviceInfo()
             Log.d(Constants.LOG_TAG, "[getDeviceInfo] Result: $ret")
             call.resolve(ret)
         } catch (error: Exception) {
