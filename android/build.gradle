@@ -48,6 +48,7 @@ android {
 repositories {
     google()
     mavenCentral()
+    maven { url 'https://jitpack.io' }
 }
 
 
@@ -62,5 +63,5 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation 'com.google.android.gms:play-services-location:21.0.1'
 
-    implementation 'com.scottyab:rootbeer-lib:0.1.0'
+    implementation 'com.github.scottyab:rootbeer:0.0.8'
 }

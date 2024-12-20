@@ -205,6 +205,7 @@ Retrieve device information.
 
 | Prop            | Type                                                  |
 | --------------- | ----------------------------------------------------- |
+| **`isRoot`**    | <code>boolean</code>                                  |
 | **`isMock`**    | <code>boolean</code>                                  |
 | **`messages`**  | <code>string</code>                                   |
 | **`indicated`** | <code><a href="#array">Array</a>&lt;string&gt;</code> |
