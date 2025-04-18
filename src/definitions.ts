@@ -7,6 +7,12 @@ export interface MockLocationCheckerPlugin {
 
   isLocationFromMockProvider(): Promise<Boolean>;
 
+  /**
+   * 
+   * @param options {packageName: string}
+   */
+  goToMockLocationAppDetail(options: { packageName: string }): Promise<void>;
+
 }
 
 export interface CheckMockResult {

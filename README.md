@@ -61,6 +61,7 @@ or,
 
 * [`checkMock(...)`](#checkmock)
 * [`isLocationFromMockProvider()`](#islocationfrommockprovider)
+* [`goToMockLocationAppDetail(...)`](#gotomocklocationappdetail)
 * [Interfaces](#interfaces)
 
 </docgen-index>
@@ -90,6 +91,19 @@ isLocationFromMockProvider() => Promise<Boolean>
 ```
 
 **Returns:** <code>Promise&lt;<a href="#boolean">Boolean</a>&gt;</code>
+
+--------------------
+
+
+### goToMockLocationAppDetail(...)
+
+```typescript
+goToMockLocationAppDetail(options: { packageName: string; }) => Promise<void>
+```
+
+| Param         | Type                                  | Description |
+| ------------- | ------------------------------------- | ----------- |
+| **`options`** | <code>{ packageName: string; }</code> | : string}   |
 
 --------------------
 
