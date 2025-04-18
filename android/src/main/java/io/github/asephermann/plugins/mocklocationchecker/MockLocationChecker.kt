@@ -3,7 +3,6 @@ package io.github.asephermann.plugins.mocklocationchecker
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
@@ -20,26 +19,20 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
-import io.github.asephermann.plugins.mocklocationchecker.checkRoot.RootJailBreakDetector
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.json.JSONArray
-import java.io.File
-import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
-
 
 const val TAG: String = "MockLocationChecker"
 
 class MockLocationChecker {
 
-    private val rootChecker: RootJailBreakDetector = RootJailBreakDetector()
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private lateinit var locationClient: LocationClient
     private lateinit var mFusedLocationClient: FusedLocationProviderClient
@@ -49,42 +42,6 @@ class MockLocationChecker {
     fun checkMock(activity: Activity, whiteList: List<String>): CheckMockResult {
         val listData: ArrayList<String>
         var msg = ""
-        // check root
-        val isRooted = isDeviceRooted(activity)
-
-        if (isRooted) {
-            msg += "Device is rooted. Please unroot the device.\n"
-
-            AlertDialog.Builder(activity)
-                .setTitle("Security Alert")
-                .setMessage("This device is rooted. The application will now exit.")
-                .setPositiveButton("OK") { _, _ ->
-                    activity.finish() // Close the application
-                }
-                .setCancelable(false)
-                .show()
-
-            // Return immediately if rooted
-            return CheckMockResult(isRooted = true, isMock = false, msg, indicated)
-        }
-
-        // check Developer Options
-        if (isDeveloperOptionsEnabled(activity)) {
-            msg += "Developer options are enabled. Please disable Developer Options.\n"
-
-            AlertDialog.Builder(activity)
-                .setTitle("Security Alert")
-                .setMessage("Please disable Developer Options to proceed.")
-                .setPositiveButton("Go to Settings") { _, _ ->
-                    val intent = Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)
-                    activity.startActivity(intent)
-                }
-                .setCancelable(false)
-                .show()
-
-            // Return immediately if rooted
-            return CheckMockResult(isRooted = false, isMock = true, msg, indicated)
-        }
 
         // check Mock Location
         val isMock: Boolean = if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP) {
@@ -108,11 +65,10 @@ class MockLocationChecker {
                 false
             }
         }
-        Log.i(TAG, "isRooted: $isRooted")
         Log.i(TAG, "isMock: $isMock")
         Log.i(TAG, "msg: $msg")
         Log.i(TAG, "indicated: $indicated")
-        return CheckMockResult(isRooted, isMock, msg, indicated)
+        return CheckMockResult(isMock, msg, indicated)
     }
 
     private fun checkForAllowMockLocationsApps(
@@ -272,7 +228,6 @@ class MockLocationChecker {
                             Result.success(
                                 CheckMockResult(
                                     false,
-                                    false,
                                     "Failed to get location",
                                     indicated
                                 )
@@ -295,7 +250,6 @@ class MockLocationChecker {
                         continuation.resumeWith(
                             Result.success(
                                 CheckMockResult(
-                                    false,
                                     isMock,
                                     msg,
                                     indicated
@@ -312,7 +266,6 @@ class MockLocationChecker {
                     Result.success(
                         CheckMockResult(
                             false,
-                            false,
                             "Timeout",
                             indicated
                         )
@@ -320,26 +273,9 @@ class MockLocationChecker {
                 )
             }
         }
-
-    private fun isDeviceRooted(activity: Activity): Boolean {
-        return rootChecker.checkIsRootedWithEmulator(activity)
-    }
-
-    private fun isDeveloperOptionsEnabled(context: Context): Boolean {
-        return try {
-            Settings.Global.getInt(
-                context.contentResolver,
-                Settings.Global.DEVELOPMENT_SETTINGS_ENABLED
-            ) == 1
-        } catch (e: Settings.SettingNotFoundException) {
-            false
-        }
-    }
-
 }
 
 data class CheckMockResult(
-    var isRooted: Boolean,
     var isMock: Boolean,
     var messages: String,
     var indicated: JSONArray

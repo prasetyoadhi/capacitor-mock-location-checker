@@ -61,14 +61,6 @@ or,
 
 * [`checkMock(...)`](#checkmock)
 * [`isLocationFromMockProvider()`](#islocationfrommockprovider)
-* [`goToMockLocationAppDetail(...)`](#gotomocklocationappdetail)
-* [`checkMockGeoLocation()`](#checkmockgeolocation)
-* [`isRooted()`](#isrooted)
-* [`isRootedWithBusyBox()`](#isrootedwithbusybox)
-* [`isRootedWithEmulator()`](#isrootedwithemulator)
-* [`isRootedWithBusyBoxWithEmulator()`](#isrootedwithbusyboxwithemulator)
-* [`whatIsRooted(...)`](#whatisrooted)
-* [`getDeviceInfo()`](#getdeviceinfo)
 * [Interfaces](#interfaces)
 
 </docgen-index>
@@ -102,102 +94,6 @@ isLocationFromMockProvider() => Promise<Boolean>
 --------------------
 
 
-### goToMockLocationAppDetail(...)
-
-```typescript
-goToMockLocationAppDetail(options: { packageName: string; }) => Promise<void>
-```
-
-| Param         | Type                                  | Description |
-| ------------- | ------------------------------------- | ----------- |
-| **`options`** | <code>{ packageName: string; }</code> | : string}   |
-
---------------------
-
-
-### checkMockGeoLocation()
-
-```typescript
-checkMockGeoLocation() => Promise<CheckMockResult>
-```
-
-**Returns:** <code>Promise&lt;<a href="#checkmockresult">CheckMockResult</a>&gt;</code>
-
---------------------
-
-
-### isRooted()
-
-```typescript
-isRooted() => Promise<{ isRooted: boolean; }>
-```
-
-**Returns:** <code>Promise&lt;{ isRooted: boolean; }&gt;</code>
-
---------------------
-
-
-### isRootedWithBusyBox()
-
-```typescript
-isRootedWithBusyBox() => Promise<{ isRooted: boolean; }>
-```
-
-**Returns:** <code>Promise&lt;{ isRooted: boolean; }&gt;</code>
-
---------------------
-
-
-### isRootedWithEmulator()
-
-```typescript
-isRootedWithEmulator() => Promise<{ isRooted: boolean; }>
-```
-
-**Returns:** <code>Promise&lt;{ isRooted: boolean; }&gt;</code>
-
---------------------
-
-
-### isRootedWithBusyBoxWithEmulator()
-
-```typescript
-isRootedWithBusyBoxWithEmulator() => Promise<{ isRooted: boolean; }>
-```
-
-**Returns:** <code>Promise&lt;{ isRooted: boolean; }&gt;</code>
-
---------------------
-
-
-### whatIsRooted(...)
-
-```typescript
-whatIsRooted(action: string) => Promise<{ isRooted: boolean; }>
-```
-
-| Param        | Type                | Description |
-| ------------ | ------------------- | ----------- |
-| **`action`** | <code>string</code> | String      |
-
-**Returns:** <code>Promise&lt;{ isRooted: boolean; }&gt;</code>
-
---------------------
-
-
-### getDeviceInfo()
-
-```typescript
-getDeviceInfo() => Promise<DeviceInfo>
-```
-
-Retrieve device information.
-
-**Returns:** <code>Promise&lt;<a href="#deviceinfo">DeviceInfo</a>&gt;</code>
-
---------------------
-
-
 ### Interfaces
 
 
@@ -205,7 +101,6 @@ Retrieve device information.
 
 | Prop            | Type                                                  |
 | --------------- | ----------------------------------------------------- |
-| **`isRoot`**    | <code>boolean</code>                                  |
 | **`isMock`**    | <code>boolean</code>                                  |
 | **`messages`**  | <code>string</code>                                   |
 | **`indicated`** | <code><a href="#array">Array</a>&lt;string&gt;</code> |
@@ -267,26 +162,5 @@ Retrieve device information.
 | Method      | Signature        | Description                                          |
 | ----------- | ---------------- | ---------------------------------------------------- |
 | **valueOf** | () =&gt; boolean | Returns the primitive value of the specified object. |
-
-
-#### DeviceInfo
-
-| Prop                | Type                |
-| ------------------- | ------------------- |
-| **`DEVICE`**        | <code>string</code> |
-| **`MODEL`**         | <code>string</code> |
-| **`MANUFACTURER`**  | <code>string</code> |
-| **`BRAND`**         | <code>string</code> |
-| **`BOARD`**         | <code>string</code> |
-| **`HARDWARE`**      | <code>string</code> |
-| **`PRODUCT`**       | <code>string</code> |
-| **`FINGERPRINT`**   | <code>string</code> |
-| **`HOST`**          | <code>string</code> |
-| **`USER`**          | <code>string</code> |
-| **`OSNAME`**        | <code>string</code> |
-| **`OSVERSION`**     | <code>string</code> |
-| **`V_INCREMENTAL`** | <code>string</code> |
-| **`V_RELEASE`**     | <code>string</code> |
-| **`V_SDK_INT`**     | <code>string</code> |
 
 </docgen-api>
