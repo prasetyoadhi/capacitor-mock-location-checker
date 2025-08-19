@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.json.JSONArray
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.suspendCoroutine
 
 const val TAG: String = "MockLocationChecker"
@@ -235,6 +236,7 @@ class MockLocationChecker {
         suspendCoroutine { continuation ->
             var msg = ""
             var isMock = false
+            val isResumed = AtomicBoolean(false)
             locationClient = DefaultLocationClient(
                 activity,
                 LocationServices.getFusedLocationProviderClient(activity)
@@ -244,15 +246,17 @@ class MockLocationChecker {
                     .getLocationUpdates(10000L)
                     .catch { e ->
                         e.printStackTrace()
-                        continuation.resumeWith(
-                            Result.success(
-                                CheckMockResult(
-                                    false,
-                                    "Failed to get location",
-                                    indicated
+                        if (isResumed.compareAndSet(false, true)) {
+                            continuation.resumeWith(
+                                Result.success(
+                                    CheckMockResult(
+                                        false,
+                                        "Failed to get location",
+                                        indicated
+                                    )
                                 )
                             )
-                        )
+                        }
                     }
                     .onEach { location ->
                         val lat = location.latitude.toString()
@@ -267,30 +271,34 @@ class MockLocationChecker {
                         msg = "Location: ($lat, $long); Is Mock: $isMock"
                     }
                     .collect {
-                        continuation.resumeWith(
-                            Result.success(
-                                CheckMockResult(
-                                    isMock,
-                                    msg,
-                                    indicated
+                        if (isResumed.compareAndSet(false, true)) {
+                            continuation.resumeWith(
+                                Result.success(
+                                    CheckMockResult(
+                                        isMock,
+                                        msg,
+                                        indicated
+                                    )
                                 )
                             )
-                        )
+                        }
                     }
             }
 
             serviceScope.launch {
                 delay(30000L)
                 locationUpdatesJob.cancel()
-                continuation.resumeWith(
-                    Result.success(
-                        CheckMockResult(
-                            false,
-                            "Timeout",
-                            indicated
+                if (isResumed.compareAndSet(false, true)) {
+                    continuation.resumeWith(
+                        Result.success(
+                            CheckMockResult(
+                                false,
+                                "Timeout",
+                                indicated
+                            )
                         )
                     )
-                )
+                }
             }
         }
 }
