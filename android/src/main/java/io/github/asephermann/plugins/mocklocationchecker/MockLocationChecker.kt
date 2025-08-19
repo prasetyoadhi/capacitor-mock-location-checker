@@ -31,6 +31,9 @@ import kotlin.coroutines.suspendCoroutine
 
 const val TAG: String = "MockLocationChecker"
 
+/**
+ * Kelas utama untuk melakukan pengecekan aplikasi mock location dan status lokasi mock.
+ */
 class MockLocationChecker {
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -38,6 +41,9 @@ class MockLocationChecker {
     private lateinit var mFusedLocationClient: FusedLocationProviderClient
     private var indicated = JSONArray()
 
+    /**
+     * Mengecek apakah ada aplikasi mock location selain whitelist.
+     */
     @SuppressLint("ObsoleteSdkInt")
     fun checkMock(activity: Activity, whiteList: List<String>): CheckMockResult {
         val listData: ArrayList<String>
@@ -71,6 +77,9 @@ class MockLocationChecker {
         return CheckMockResult(isMock, msg, indicated)
     }
 
+    /**
+     * Mengecek aplikasi yang memiliki permission mock location.
+     */
     private fun checkForAllowMockLocationsApps(
         activity: Activity,
         whiteList: ArrayList<String>
@@ -138,6 +147,9 @@ class MockLocationChecker {
         return count > 0
     }
 
+    /**
+     * Mengecek apakah lokasi terakhir berasal dari mock provider (menggunakan suspend/coroutine).
+     */
     @SuppressLint("ObsoleteSdkInt")
     suspend fun isLocationFromMockProvider(activity: Activity): Boolean = suspendCoroutine { continuation ->
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(activity)
@@ -205,6 +217,9 @@ class MockLocationChecker {
         }
     }
 
+    /**
+     * Mengecek apakah location service aktif.
+     */
     private fun isLocationEnabled(activity: Activity): Boolean {
         val locationManager: LocationManager =
             activity.getSystemService(Context.LOCATION_SERVICE) as LocationManager
@@ -213,6 +228,9 @@ class MockLocationChecker {
         )
     }
 
+    /**
+     * Mendapatkan lokasi dan mengecek apakah lokasi tersebut mock (menggunakan coroutine).
+     */
     suspend fun checkMockGeoLocation(activity: Activity): CheckMockResult =
         suspendCoroutine { continuation ->
             var msg = ""
@@ -277,6 +295,9 @@ class MockLocationChecker {
         }
 }
 
+/**
+ * Data class untuk hasil pengecekan mock location.
+ */
 data class CheckMockResult(
     var isMock: Boolean,
     var messages: String,

@@ -17,6 +17,9 @@ import kotlinx.coroutines.launch
 class MockLocationCheckerPlugin : Plugin() {
     private val implementation = MockLocationChecker()
 
+    /**
+     * Mengecek apakah ada aplikasi mock location selain whitelist.
+     */
     @PluginMethod
     fun checkMock(call: PluginCall)  {
         val whiteList = call.getArray("whiteList")
@@ -30,6 +33,9 @@ class MockLocationCheckerPlugin : Plugin() {
         call.resolve(ret)
     }
 
+    /**
+     * Mengecek apakah lokasi terakhir berasal dari mock provider (suspend).
+     */
     @PluginMethod
     fun isLocationFromMockProvider(call: PluginCall)  {
         val ret = JSObject()
@@ -40,6 +46,9 @@ class MockLocationCheckerPlugin : Plugin() {
         call.resolve(ret)
     }
 
+    /**
+     * Membuka detail aplikasi mock location di pengaturan.
+     */
     @PluginMethod
     fun goToMockLocationAppDetail(call: PluginCall)  {
         val packageName = call.getString("packageName")
@@ -51,8 +60,11 @@ class MockLocationCheckerPlugin : Plugin() {
         }
     }
 
+    /**
+     * Mendapatkan lokasi dan mengecek apakah lokasi tersebut mock (menggunakan coroutine).
+     */
     @PluginMethod
-    fun checkMockGeoLocation(call: PluginCall) {
+    fun checkMockGeoLocation(call: PluginCall) {        
         CoroutineScope(Dispatchers.Main).launch {
             val result = implementation.checkMockGeoLocation(activity)
             val ret = JSObject()
