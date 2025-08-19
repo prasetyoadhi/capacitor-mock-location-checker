@@ -39,11 +39,11 @@ class MockLocationCheckerPlugin : Plugin() {
     @PluginMethod
     fun isLocationFromMockProvider(call: PluginCall)  {
         val ret = JSObject()
-
-        val result = implementation.isLocationFromMockProvider(activity)
-
-        ret.put("value", result)
-        call.resolve(ret)
+        CoroutineScope(Dispatchers.Main).launch {
+            val result = implementation.isLocationFromMockProvider(activity)
+            ret.put("value", result)
+            call.resolve(ret)
+        }
     }
 
     /**
