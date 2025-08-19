@@ -9,6 +9,9 @@ import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @CapacitorPlugin(name = "MockLocationChecker")
 class MockLocationCheckerPlugin : Plugin() {
@@ -45,6 +48,18 @@ class MockLocationCheckerPlugin : Plugin() {
             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
             intent.data = Uri.parse(String.format("package:%s", packageName))
             activity.startActivity(intent)
+        }
+    }
+
+    @PluginMethod
+    fun checkMockGeoLocation(call: PluginCall) {
+        CoroutineScope(Dispatchers.Main).launch {
+            val result = implementation.checkMockGeoLocation(activity)
+            val ret = JSObject()
+            ret.put("isMock", result.isMock)
+            ret.put("messages", result.messages)
+            ret.put("indicated", result.indicated)
+            call.resolve(ret)
         }
     }
 }

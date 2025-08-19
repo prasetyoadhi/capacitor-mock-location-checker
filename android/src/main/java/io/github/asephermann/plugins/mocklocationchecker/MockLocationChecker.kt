@@ -139,31 +139,13 @@ class MockLocationChecker {
     }
 
     @SuppressLint("ObsoleteSdkInt")
-    fun isLocationFromMockProvider(activity: Activity): Boolean {
-        var isFromMockProvider = false
+    suspend fun isLocationFromMockProvider(activity: Activity): Boolean = suspendCoroutine { continuation ->
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(activity)
         val locationRequest = LocationRequest.create().apply {
             interval = 1000
             fastestInterval = 500
             priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        }
-
-        val locationCallback = object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult) {
-                locationResult.lastLocation?.let { location ->
-                    try {
-                        isFromMockProvider = if (Build.VERSION.SDK_INT <= 30) {
-                            location.isFromMockProvider
-                        } else if (Build.VERSION.SDK_INT >= 31) {
-                            location.isMock
-                        } else {
-                            false
-                        }
-                    } catch (e: Exception) {
-                        Log.e("MockLocationChecker", e.toString())
-                    }
-                }
-            }
+            numUpdates = 1 // hanya ambil satu update lokasi
         }
 
         if (Build.VERSION.SDK_INT >= 18) {
@@ -181,7 +163,27 @@ class MockLocationChecker {
                     val uri = Uri.fromParts("package", activity.packageName, null)
                     intent.data = uri
                     activity.startActivity(intent)
-                    return false
+                    continuation.resumeWith(Result.success(false))
+                    return@suspendCoroutine
+                }
+                val locationCallback = object : LocationCallback() {
+                    override fun onLocationResult(locationResult: LocationResult) {
+                        mFusedLocationClient.removeLocationUpdates(this)
+                        val location = locationResult.lastLocation
+                        val isFromMockProvider = try {
+                            if (Build.VERSION.SDK_INT <= 30) {
+                                location?.isFromMockProvider ?: false
+                            } else if (Build.VERSION.SDK_INT >= 31) {
+                                location?.isMock ?: false
+                            } else {
+                                false
+                            }
+                        } catch (e: Exception) {
+                            Log.e("MockLocationChecker", e.toString())
+                            false
+                        }
+                        continuation.resumeWith(Result.success(isFromMockProvider))
+                    }
                 }
                 mFusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null)
             } else {
@@ -192,14 +194,14 @@ class MockLocationChecker {
                 ).show()
                 val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
                 activity.startActivity(intent)
-                return false
+                continuation.resumeWith(Result.success(false))
             }
-            return isFromMockProvider
         } else {
-            return Settings.Secure.getString(
+            val isMock = Settings.Secure.getString(
                 activity.applicationContext.contentResolver,
                 Settings.Secure.ALLOW_MOCK_LOCATION
             ) != "0"
+            continuation.resumeWith(Result.success(isMock))
         }
     }
 
